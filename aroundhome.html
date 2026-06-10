@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekla Manager — Planville GmbH</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+--bg:#ffffff;--bg2:#f8f9fa;--bg3:#f1f3f5;
+--text:#1a1a1a;--text2:#6b7280;--text3:#9ca3af;
+--border:#e5e7eb;--border2:#d1d5db;
+--blue-bg:#eff6ff;--blue-text:#1d4ed8;--blue-border:#bfdbfe;
+--green-bg:#f0fdf4;--green-text:#166534;--green-border:#bbf7d0;
+--red-bg:#fef2f2;--red-text:#991b1b;--red-border:#fecaca;
+--amber-bg:#fffbeb;--amber-text:#92400e;--amber-border:#fde68a;
+--purple-bg:#f5f3ff;--purple-text:#5b21b6;--purple-border:#ddd6fe;
+--gray-bg:#f9fafb;--gray-text:#374151;--gray-border:#e5e7eb;
+--radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh;}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100;}
+.topbar-brand{display:flex;align-items:center;gap:10px;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--text);}
+.topbar-sub{font-size:12px;color:var(--text2);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+
+/* ── Tab nav ── */
+.tab-nav{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);}
+.tab-nav-btn{font-size:13px;padding:10px 16px;border:none;background:none;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;transition:color .15s;}
+.tab-nav-btn:hover{color:var(--text);}
+.tab-nav-btn.active{color:var(--blue-text);border-bottom-color:var(--blue-text);font-weight:500;}
+.tab-content{display:none;padding:20px 24px;}
+.tab-content.active{display:block;}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.sc{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;}
+.sc-l{font-size:11px;color:var(--text2);margin-bottom:3px;}
+.sc-v{font-size:22px;font-weight:600;color:var(--text);}
+.sc-s{font-size:11px;color:var(--text3);margin-top:1px;}
+
+/* ── Import box ── */
+.import-box{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:18px;}
+.import-header{padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;}
+.import-body{padding:14px;}
+.hint{font-size:11px;color:var(--text3);margin-top:5px;}
+textarea{width:100%;font-size:12px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:monospace;background:var(--bg);color:var(--text);resize:vertical;outline:none;}
+textarea:focus{border-color:#93c5fd;}
+
+/* ── Filters ── */
+.fbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.fbar input,.fbar select{font-size:13px;padding:6px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;}
+.fbar input{flex:1;min-width:140px;}
+.fbar input:focus,.fbar select:focus{border-color:#93c5fd;}
+
+/* ── Buttons ── */
+.btn{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;transition:background .12s;}
+.btn:hover{background:var(--bg2);}
+.btn-blue{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border);}
+.btn-blue:hover{opacity:.85;}
+.btn-green{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+.btn-green:hover{opacity:.85;}
+.btn-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);}
+.btn-amber:hover{opacity:.85;}
+.btn-gray{background:var(--bg2);color:var(--text2);border-color:var(--border);}
+.btn-red{background:var(--red-bg);color:var(--red-text);border-color:var(--red-border);}
+
+/* ── Anbieter tabs ── */
+.atabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.atab{font-size:12px;padding:4px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;}
+.atab.active{font-weight:500;}
+.atab-all.active{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+.atab-ah.active{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border);}
+.atab-skv.active{background:var(--purple-bg);color:var(--purple-text);border-color:var(--purple-border);}
+.atab-daa.active{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);}
+.atab-wf.active{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg2);}
+tr.done-row td{opacity:.45;}
+
+/* ── Pills ── */
+.pill{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500;display:inline-block;white-space:nowrap;}
+.p-ja{background:var(--green-bg);color:var(--green-text);}
+.p-ab{background:var(--red-bg);color:var(--red-text);}
+.p-of{background:var(--amber-bg);color:var(--amber-text);}
+.p-no{background:var(--purple-bg);color:var(--purple-text);}
+.p-ein{background:var(--blue-bg);color:var(--blue-text);}
+.p-pend{background:var(--gray-bg);color:var(--gray-text);}
+.ab-ah{background:var(--blue-bg);color:var(--blue-text);}
+.ab-skv{background:var(--purple-bg);color:var(--purple-text);}
+.ab-daa{background:var(--amber-bg);color:var(--amber-text);}
+.ab-wf{background:var(--green-bg);color:var(--green-text);}
+.badge{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500;display:inline-block;}
+.ov-chip{font-size:11px;color:var(--red-text);background:var(--red-bg);padding:1px 6px;border-radius:10px;font-weight:500;}
+.ok-chip{font-size:11px;color:var(--green-text);background:var(--green-bg);padding:1px 6px;border-radius:10px;}
+
+/* ── Cells ── */
+.grund-cell{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
+.date-s{font-size:11px;color:var(--text2);white-space:nowrap;}
+.mono{font-family:monospace;font-size:11px;}
+.chk{width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.chk.on{background:var(--green-bg);border-color:var(--green-border);}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:40px 20px;color:var(--text2);}
+.empty i{font-size:32px;margin-bottom:12px;display:block;}
+.empty-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--border);padding:20px 24px;width:520px;max-width:96vw;max-height:88vh;overflow-y:auto;}
+.modal-wide{width:580px;}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.mt{font-size:15px;font-weight:600;color:var(--text);}
+.mc{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2);padding:2px;}
+.fl{font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;}
+.fv{font-size:13px;color:var(--text);padding:7px 9px;background:var(--bg2);border-radius:var(--radius);word-break:break-word;}
+.fg{margin-bottom:12px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.finput{font-size:13px;padding:6px 9px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);width:100%;outline:none;}
+.finput:focus{border-color:#93c5fd;}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.sdiv{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;display:flex;align-items:center;gap:8px;}
+.sdiv::after{content:'';flex:1;height:1px;background:var(--border);}
+.ok-banner{background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--green-text);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.warn-banner{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--red-text);margin-bottom:12px;}
+.info-note{background:var(--bg2);border-radius:var(--radius);padding:8px 12px;font-size:11px;color:var(--text2);margin-top:10px;display:flex;align-items:flex-start;gap:6px;}
+.wfta{width:100%;font-size:12px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;line-height:1.5;font-family:inherit;outline:none;}
+.cpok{font-size:12px;color:var(--green-text);display:none;margin-left:6px;}
+
+/* ── Aroundhome report ── */
+.ah-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.ah-logo{font-size:15px;font-weight:600;}
+.ah-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);}
+.watermark{font-size:11px;color:var(--text3);text-align:center;padding:12px;border-top:1px solid var(--border);margin-top:20px;}
+.notiz-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0;}
+.pending-dot{width:7px;height:7px;border-radius:50%;background:#e5e7eb;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div class="topbar-brand">
+    <i class="ti ti-file-invoice" style="font-size:18px;color:#1d4ed8;"></i>
+    <div>
+      <div class="topbar-logo">Rekla Manager</div>
+      <div class="topbar-sub">Planville GmbH · Intern</div>
+    </div>
+  </div>
+  <div class="topbar-right" id="topbar-actions">
+    <button class="btn btn-green" onclick="showExport('sheet')"><i class="ti ti-download"></i> Export Sheet</button>
+    <button class="btn btn-blue" onclick="showExport('aroundhome')"><i class="ti ti-brand-google"></i> Export Aroundhome</button>
+  </div>
+</div>
+
+<div class="tab-nav" id="tab-nav">
+  <button class="tab-nav-btn active" id="tnb-1" onclick="switchMainTab(1)"><i class="ti ti-layout-list"></i> Rekla Manager</button>
+  <button class="tab-nav-btn" id="tnb-2" onclick="switchMainTab(2)"><i class="ti ti-chart-bar"></i> Aroundhome Report</button>
+</div>
+
+<!-- ════════════════ TAB 1: REKLA MANAGER ════════════════ -->
+<div class="tab-content active" id="tab1">
+
+  <div class="stats">
+    <div class="sc"><div class="sc-l">Gesamt</div><div class="sc-v" id="s0">0</div><div class="sc-s">alle Anbieter</div></div>
+    <div class="sc"><div class="sc-l">Ausstehend</div><div class="sc-v" id="s1" style="color:#92400e;">0</div><div class="sc-s">noch einzureichen</div></div>
+    <div class="sc"><div class="sc-l">Eingereicht</div><div class="sc-v" id="s2" style="color:#166534;">0</div><div class="sc-s">bereits erledigt</div></div>
+    <div class="sc"><div class="sc-l">Ueberfaellig</div><div class="sc-v" id="s3" style="color:#991b1b;">0</div><div class="sc-s">&gt;14 Tage offen</div></div>
+  </div>
+
+  <div class="import-box">
+    <div class="import-header"><i class="ti ti-upload"></i> Daten aus Google Sheets importieren</div>
+    <div class="import-body">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:7px;">Sheet <strong>Rekla 2026</strong> oeffnen → Strg+A → Strg+C → hier einfuegen:</div>
+      <textarea id="tsvIn1" rows="3" placeholder="Eingangsdatum&#9;Eingang Rekla / Archiviert am (Datum)&#9;Rekla LInk&#9;Grund&#9;Rekla-Anbieter&#9;..."></textarea>
+      <div class="hint">Hinweis: Grüne Markierung wird nicht übertragen — Eingereicht = Spalte F ausgefüllt oder Status JA</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+        <button class="btn btn-blue" onclick="parseTSV1()"><i class="ti ti-table-import"></i> Einlesen</button>
+        <span id="fb1" style="font-size:12px;color:var(--green-text);display:none;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="atabs">
+    <button class="atab atab-all active" id="at-all" onclick="switchAtab(this,'all')"><i class="ti ti-layout-list"></i> Alle <span id="tc-all" style="font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:8px;margin-left:2px;">0</span></button>
+    <button class="atab atab-ah" id="at-ah" onclick="switchAtab(this,'aroundhome')">Aroundhome <span id="tc-ah" style="font-size:11px;padding:1px 5px;border-radius:8px;margin-left:2px;background:var(--blue-bg);color:var(--blue-text);">0</span></button>
+    <button class="atab atab-skv" id="at-skv" onclick="switchAtab(this,'skv')">SKV <span id="tc-skv" style="font-size:11px;padding:1px 5px;border-radius:8px;margin-left:2px;background:var(--purple-bg);color:var(--purple-text);">0</span></button>
+    <button class="atab atab-daa" id="at-daa" onclick="switchAtab(this,'daa')">DAA <span id="tc-daa" style="font-size:11px;padding:1px 5px;border-radius:8px;margin-left:2px;background:var(--amber-bg);color:var(--amber-text);">0</span></button>
+    <button class="atab atab-wf" id="at-wf" onclick="switchAtab(this,'wattfox')">Wattfox <span id="tc-wf" style="font-size:11px;padding:1px 5px;border-radius:8px;margin-left:2px;background:var(--green-bg);color:var(--green-text);">0</span></button>
+  </div>
+
+  <div class="fbar">
+    <input type="text" id="fsearch1" placeholder="Suche Lead-ID, Grund..." oninput="render1()">
+    <select id="fstatus1" onchange="render1()">
+      <option value="">Alle Status</option>
+      <option value="pend">Ausstehend</option>
+      <option value="JA">JA</option>
+      <option value="ABGELEHNT">ABGELEHNT</option>
+      <option value="OFFENE FRAGE">OFFENE FRAGE</option>
+      <option value="NOTIZEN">NOTIZEN</option>
+    </select>
+    <select id="fov1" onchange="render1()">
+      <option value="">Alle Fristen</option>
+      <option value="y">Ueberfaellig</option>
+      <option value="n">Im Zeitplan</option>
+    </select>
+    <select id="fsub1" onchange="render1()">
+      <option value="">Alle</option>
+      <option value="n">Nur ausstehend</option>
+      <option value="y">Nur eingereicht</option>
+    </select>
+  </div>
+
+  <div id="tbl1"></div>
+</div>
+
+<!-- ════════════════ TAB 2: AROUNDHOME REPORT ════════════════ -->
+<div class="tab-content" id="tab2">
+
+  <div class="ah-header">
+    <div>
+      <div class="ah-logo"><i class="ti ti-chart-bar" style="font-size:16px;vertical-align:-2px;margin-right:6px;color:#1d4ed8;"></i>Reklamations-Validierungsbericht</div>
+      <div class="ah-sub">Planville GmbH · Nur fuer Aroundhome · Stand: <span id="report-date"></span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;" id="ah-internal-btns">
+      <span style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border);">Aroundhome</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="sc"><div class="sc-l">Gesamt eingereicht</div><div class="sc-v" id="a0">0</div><div class="sc-s">Lead-IDs</div></div>
+    <div class="sc"><div class="sc-l">Anerkannt (JA)</div><div class="sc-v" id="a1" style="color:#166534;">0</div><div class="sc-s">Erstattung bestaetigt</div></div>
+    <div class="sc"><div class="sc-l">Abgelehnt</div><div class="sc-v" id="a2" style="color:#991b1b;">0</div><div class="sc-s">Nicht anerkannt</div></div>
+    <div class="sc"><div class="sc-l">Ausstehend</div><div class="sc-v" id="a3" style="color:#92400e;">0</div><div class="sc-s">In Bearbeitung</div></div>
+  </div>
+
+  <div class="legend">
+    <span style="font-size:11px;font-weight:500;color:var(--text2);">Status:</span>
+    <span class="legend-item"><span class="pill p-ja">JA</span> Anerkannt</span>
+    <span class="legend-item"><span class="pill p-ab">ABGELEHNT</span> Nicht anerkannt</span>
+    <span class="legend-item"><span class="pill p-of">OFFENE FRAGE</span> In Klaerung</span>
+    <span class="legend-item"><span class="pill p-ein">Eingereicht</span> Warten auf Rueckmeldung</span>
+    <span class="legend-item"><span class="pill p-pend">Ausstehend</span> Noch nicht bearbeitet</span>
+  </div>
+
+  <div class="fbar">
+    <input type="text" id="fsearch2" placeholder="Suche Lead-ID, Grund..." oninput="render2()">
+    <select id="fstatus2" onchange="render2()">
+      <option value="">Alle Status</option>
+      <option value="JA">JA (Anerkannt)</option>
+      <option value="ABGELEHNT">Abgelehnt</option>
+      <option value="OFFENE FRAGE">Offene Frage</option>
+      <option value="Eingereicht">Eingereicht</option>
+      <option value="Ausstehend">Ausstehend</option>
+    </select>
+    <select id="fov2" onchange="render2()">
+      <option value="">Alle Fristen</option>
+      <option value="y">Ueberfaellig</option>
+      <option value="n">Im Zeitplan</option>
+    </select>
+  </div>
+
+  <div id="tbl2"></div>
+
+  <div class="watermark" id="wm2" style="display:none;">
+    Planville GmbH · Reklamations-Validierungsbericht · Vertraulich · Nur fuer Aroundhome
+  </div>
+</div>
+
+<!-- ════════ MODALS ════════ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal"><div class="mh"><div class="mt" id="dTitle">Details</div><button class="mc" onclick="closeMod('detailModal')"><i class="ti ti-x"></i></button></div><div id="dBody"></div></div>
+</div>
+<div class="modal-overlay" id="wfModal">
+  <div class="modal modal-wide"><div class="mh"><div class="mt"><i class="ti ti-mail" style="margin-right:6px;"></i>Wattfox — E-Mail-Entwurf</div><button class="mc" onclick="closeMod('wfModal')"><i class="ti ti-x"></i></button></div><div id="wfBody"></div></div>
+</div>
+<div class="modal-overlay" id="exportModal">
+  <div class="modal modal-wide"><div class="mh"><div class="mt" id="expTitle">Export</div><button class="mc" onclick="closeMod('exportModal')"><i class="ti ti-x"></i></button></div><div id="expBody"></div></div>
+</div>
+<div class="modal-overlay" id="ahDetailModal">
+  <div class="modal"><div class="mh"><div class="mt" id="ahDTitle">Lead-Details</div><button class="mc" onclick="closeMod('ahDetailModal')"><i class="ti ti-x"></i></button></div><div id="ahDBody"></div></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+var leads=[], edits={}, done={}, notes={}, curTab='all', ahLeads=[];
+var isAhView = true;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.getElementById('report-date').textContent=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+if(isAhView){
+  document.getElementById('topbar').style.display='none';
+  document.getElementById('tab-nav').style.display='none';
+  document.getElementById('tab1').classList.remove('active');
+  document.getElementById('tab2').classList.add('active');
+  document.getElementById('ah-internal-btns').style.display='none';
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function xid(link){if(!link)return'';var m=link.match(/leads\/(\d+)/);return m?m[1]:'';}
+function ge(l,f){return(edits[l.id]&&edits[l.id][f]!==undefined)?edits[l.id][f]:l[f]||'';}
+function se(id,f,v){if(!edits[id])edits[id]={};edits[id][f]=v;updateStats();render1();}
+function isSub(l){var e=ge(l,'eingereicht'),s=ge(l,'reklaStatus');return !!(e||(s&&s.toUpperCase()==='JA')||done[l.id]);}
+function isOv(l){
+  if(isSub(l))return false;
+  var d=ge(l,'eingangsdatum');if(!d)return false;
+  var p=d.split('.');if(p.length<3)return false;
+  return(new Date()-new Date(+p[2],+p[1]-1,+p[0]))/86400000>14;
+}
+function getAhStatus(l){
+  var s=(l.reklaStatus||'').toUpperCase();
+  if(s==='JA')return'JA';if(s==='ABGELEHNT')return'ABGELEHNT';
+  if(s==='OFFENE FRAGE')return'OFFENE FRAGE';if(s==='NOTIZEN')return'NOTIZEN';
+  if(l.eingereicht)return'Eingereicht';return'Ausstehend';
+}
+function sPill1(l){
+  var s=ge(l,'reklaStatus')||'';
+  if(isSub(l)&&s==='JA')return'<span class="pill p-ja">JA</span>';
+  if(s==='ABGELEHNT')return'<span class="pill p-ab">ABGELEHNT</span>';
+  if(s==='OFFENE FRAGE')return'<span class="pill p-of">OFFENE FRAGE</span>';
+  if(s==='NOTIZEN')return'<span class="pill p-no">NOTIZEN</span>';
+  if(isSub(l))return'<span class="pill p-ein">Eingereicht</span>';
+  return'<span class="pill p-pend">Ausstehend</span>';
+}
+function sPill2(l){
+  var s=getAhStatus(l);
+  if(s==='JA')return'<span class="pill p-ja">JA</span>';
+  if(s==='ABGELEHNT')return'<span class="pill p-ab">ABGELEHNT</span>';
+  if(s==='OFFENE FRAGE')return'<span class="pill p-of">OFFENE FRAGE</span>';
+  if(s==='NOTIZEN')return'<span class="pill p-no">NOTIZEN</span>';
+  if(s==='Eingereicht')return'<span class="pill p-ein">Eingereicht</span>';
+  return'<span class="pill p-pend">Ausstehend</span>';
+}
+function aBadge(a){
+  var k=(a||'').toLowerCase();
+  var m={aroundhome:'ab-ah',skv:'ab-skv',daa:'ab-daa',wattfox:'ab-wf'};
+  return'<span class="badge '+(m[k]||'')+'">'+(a||'—')+'</span>';
+}
+function isOvAh(l){
+  if(l.eingereicht)return false;
+  var d=l.erstellungsdatum||l.eingangsdatum;if(!d)return false;
+  var p=d.split('.');if(p.length<3)return false;
+  return(new Date()-new Date(+p[2],+p[1]-1,+p[0]))/86400000>14;
+}
+
+// ── Parse TSV (Tab 1) ──────────────────────────────────────────────────────
+function parseTSV1(){
+  var raw=document.getElementById('tsvIn1').value.trim();
+  if(!raw)return;
+  var rows=raw.split('\n').map(function(r){return r.split('\t');});
+  if(rows.length<2)return;
+  var h=rows[0].map(function(x){return x.trim().toLowerCase();});
+  var ci=function(){var t=Array.from(arguments);for(var i=0;i<t.length;i++){var j=h.findIndex(function(x){return x.includes(t[i]);});if(j>=0)return j;}return -1;};
+  var iA=ci('eingangsdatum'),iB=ci('archiviert','eingang rekla'),iC=ci('rekla link','reklalink','link'),iD=ci('grund'),iE=ci('anbieter'),iF=ci('eingereicht'),iG=ci('rückmeld','ruckmeld'),iH=ci('rekla status','status'),iI=ci('ablehnungsgrund'),iJ=ci('gutt','gutschrift'),iK=ci('notizen');
+  var parsed=[];
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i];if(r.every(function(c){return !c.trim();}))continue;
+    var link=iC>=0?r[iC]?.trim():'';
+    parsed.push({id:i,eingangsdatum:iA>=0?r[iA]?.trim():'',archiviert:iB>=0?r[iB]?.trim():'',reklaLink:link,leadId:xid(link),grund:iD>=0?r[iD]?.trim():'',anbieter:iE>=0?r[iE]?.trim():'',eingereicht:iF>=0?r[iF]?.trim():'',rueckmeldung:iG>=0?r[iG]?.trim():'',reklaStatus:iH>=0?r[iH]?.trim():'',ablehnungsgrund:iI>=0?r[iI]?.trim():'',gutschrift:iJ>=0?r[iJ]?.trim():'',notizen:iK>=0?r[iK]?.trim():''});
+  }
+  leads=parsed;edits={};done={};
+  refresh1();
+  var fb=document.getElementById('fb1');fb.textContent='✓ '+leads.length+' Leads eingelesen';fb.style.display='inline';
+  setTimeout(function(){fb.style.display='none';},3000);
+}
+
+// ── Stats & Counts ─────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('s0').textContent=leads.length;
+  document.getElementById('s1').textContent=leads.filter(function(l){return !isSub(l);}).length;
+  document.getElementById('s2').textContent=leads.filter(function(l){return isSub(l);}).length;
+  document.getElementById('s3').textContent=leads.filter(function(l){return isOv(l);}).length;
+  document.getElementById('tc-all').textContent=leads.length;
+  ['aroundhome','skv','daa','wattfox'].forEach(function(a){
+    var el=document.getElementById('tc-'+a.replace('aroundhome','ah'));
+    if(el)el.textContent=leads.filter(function(l){return(l.anbieter||'').toLowerCase()===a;}).length;
+  });
+  document.getElementById('tc-skv').textContent=leads.filter(function(l){return(l.anbieter||'').toLowerCase()==='skv';}).length;
+  document.getElementById('tc-daa').textContent=leads.filter(function(l){return(l.anbieter||'').toLowerCase()==='daa';}).length;
+  document.getElementById('tc-wf').textContent=leads.filter(function(l){return(l.anbieter||'').toLowerCase()==='wattfox';}).length;
+}
+function updateAhStats(){
+  var total=ahLeads.length,ja=ahLeads.filter(function(l){return getAhStatus(l)==='JA';}).length,ab=ahLeads.filter(function(l){return getAhStatus(l)==='ABGELEHNT';}).length,pend=ahLeads.filter(function(l){var s=getAhStatus(l);return s!=='JA'&&s!=='ABGELEHNT';}).length;
+  document.getElementById('a0').textContent=total;document.getElementById('a1').textContent=ja;document.getElementById('a2').textContent=ab;document.getElementById('a3').textContent=pend;
+  document.getElementById('wm2').style.display=total?'block':'none';
+}
+function refresh1(){updateStats();render1();}
+
+// ── Filter & Render (Tab 1) ────────────────────────────────────────────────
+function getFiltered1(){
+  var q=document.getElementById('fsearch1').value.toLowerCase(),fs=document.getElementById('fstatus1').value,fo=document.getElementById('fov1').value,fsub=document.getElementById('fsub1').value;
+  return leads.filter(function(l){
+    if(curTab!=='all'&&(l.anbieter||'').toLowerCase()!==curTab)return false;
+    if(q&&!(l.grund||'').toLowerCase().includes(q)&&!(l.leadId||'').includes(q)&&!(l.eingangsdatum||'').includes(q))return false;
+    var sub=isSub(l);
+    if(fsub==='n'&&sub)return false;if(fsub==='y'&&!sub)return false;
+    if(fs==='pend'&&sub)return false;
+    if(fs&&fs!=='pend'&&(ge(l,'reklaStatus')||'')!==fs)return false;
+    if(fo==='y'&&!isOv(l))return false;if(fo==='n'&&isOv(l))return false;
+    return true;
+  });
+}
+function render1(){
+  var list=getFiltered1(),w=document.getElementById('tbl1');
+  if(!list.length){w.innerHTML='<div class="empty"><i class="ti ti-inbox"></i><div class="empty-title">Keine Eintraege</div><div style="font-size:13px;">Daten importieren oder Filter anpassen.</div></div>';return;}
+  var isAH=curTab==='aroundhome';
+  var h='<div class="tbl-wrap"><table><thead><tr><th style="width:20px;"></th><th>Eingang</th><th>'+(isAH?'Lead-ID':'Lead-ID')+'</th><th>Anbieter</th><th>Grund</th><th>Eingereicht</th><th>Rueckmeld.</th><th>Status</th><th>Frist</th><th>Aktion</th></tr></thead><tbody>';
+  list.forEach(function(l){
+    var sub=isSub(l),ov=isOv(l),lid=l.leadId||xid(l.reklaLink),ein=ge(l,'eingereicht'),rueck=ge(l,'rueckmeldung'),hasNote=notes[l.id];
+    h+='<tr class="'+(sub?'done-row':'')+'">';
+    h+='<td><div class="chk '+(sub?'on':'')+'" onclick="toggleDone('+l.id+')">'+(sub?'<i class="ti ti-check" style="font-size:10px;color:var(--green-text);"></i>':'')+'</div></td>';
+    h+='<td><span class="date-s">'+(ge(l,'eingangsdatum')||'—')+'</span></td>';
+    h+='<td><span class="mono">'+(lid||'—')+'</span></td>';
+    h+='<td>'+aBadge(l.anbieter)+'</td>';
+    h+='<td><div class="grund-cell" title="'+(l.grund||'').replace(/"/g,'&quot;')+'">'+(l.grund||'—')+'</div></td>';
+    h+='<td><span class="date-s" style="'+(ein?'color:var(--green-text);':'')+'">'+(ein||'<span style="color:var(--text3);font-style:italic;font-size:11px;">offen</span>')+'</span></td>';
+    h+='<td><span class="date-s">'+(rueck||'—')+'</span></td>';
+    h+='<td>'+sPill1(l)+'</td>';
+    h+='<td>'+(ov?'<span class="ov-chip">!</span>':'<span class="ok-chip">OK</span>')+'</td>';
+    h+='<td style="display:flex;gap:4px;align-items:center;">';
+    var a=(l.anbieter||'').toLowerCase();
+    var portals={aroundhome:'https://cockpit.aroundhome.de/leads',skv:'https://interfaces.betterbusiness.com/lead-complaint',daa:'https://www.daa.net/customer/leads/purchased/subscription?maxResults=50&offset=0&orderColumnKey=date&orderDirection=DESC'};
+    if(!sub){
+      if(a==='wattfox')h+='<button class="btn btn-amber" onclick="openWF('+l.id+')"><i class="ti ti-mail"></i></button>';
+      else if(portals[a])h+='<button class="btn btn-blue" onclick="openPortal(\''+portals[a]+'\','+l.id+')"><i class="ti ti-external-link"></i></button>';
+    }
+    h+='<button class="btn" onclick="openDetail('+l.id+')" title="Details"><i class="ti ti-dots"></i></button>';
+    if(hasNote)h+='<span class="notiz-dot" title="Notiz vorhanden"></span>';
+    h+='</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  w.innerHTML=h;
+}
+
+// ── Tab 1 actions ──────────────────────────────────────────────────────────
+var PORTALS={aroundhome:'https://cockpit.aroundhome.de/leads',skv:'https://interfaces.betterbusiness.com/lead-complaint',daa:'https://www.daa.net/customer/leads/purchased/subscription?maxResults=50&offset=0&orderColumnKey=date&orderDirection=DESC'};
+function switchAtab(btn,tab){document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');curTab=tab;render1();}
+function toggleDone(id){done[id]=!done[id];refresh1();}
+function openPortal(url,id){var l=leads.find(function(x){return x.id===id;});if(l){var lid=l.leadId||xid(l.reklaLink);if(lid)navigator.clipboard.writeText(lid).catch(function(){});}window.open(url,'_blank');}
+function markEin(id){var t=new Date(),d=String(t.getDate()).padStart(2,'0')+'.'+String(t.getMonth()+1).padStart(2,'0')+'.'+t.getFullYear();if(!edits[id])edits[id]={};if(!edits[id].eingereicht)edits[id].eingereicht=d;done[id]=true;closeMod('detailModal');refresh1();}
+
+function openDetail(id){
+  var l=leads.find(function(x){return x.id===id;});if(!l)return;
+  var sub=isSub(l),lid=l.leadId||xid(l.reklaLink),a=(l.anbieter||'').toLowerCase();
+  document.getElementById('dTitle').textContent='Lead '+(lid||l.eingangsdatum)+' · '+(l.anbieter||'');
+  var b='';
+  if(sub)b+='<div class="ok-banner"><i class="ti ti-circle-check"></i> Bereits eingereicht.</div>';
+  b+='<div style="background:var(--bg2);border-radius:var(--radius);padding:7px 10px;font-size:11px;color:var(--text2);margin-bottom:12px;"><i class="ti ti-pencil" style="margin-right:4px;"></i>Felder unten von Ihnen (Bearbeiter) auszufuellen.</div>';
+  b+='<div class="two"><div><div class="fl">Eingangsdatum</div><input class="finput" value="'+(ge(l,'eingangsdatum'))+'" placeholder="31.12.2025" oninput="se('+id+',\'eingangsdatum\',this.value)"></div>';
+  b+='<div><div class="fl">Archiviert am</div><input class="finput" value="'+(ge(l,'archiviert'))+'" placeholder="18.12.2025" oninput="se('+id+',\'archiviert\',this.value)"></div></div>';
+  b+='<div class="sdiv">Von Mitarbeiter</div>';
+  if(lid)b+='<div class="fg"><div class="fl">Lead-ID</div><div class="fv" style="font-family:monospace;display:flex;align-items:center;justify-content:space-between;">'+lid+'<button class="btn" style="font-size:11px;" onclick="navigator.clipboard.writeText(\''+lid+'\')"><i class="ti ti-copy"></i></button></div></div>';
+  if(l.reklaLink)b+='<div class="fg"><div class="fl">Rekla-Link (intern)</div><div class="fv"><a href="'+l.reklaLink+'" target="_blank" style="color:var(--blue-text);font-size:12px;">'+l.reklaLink+'</a></div></div>';
+  b+='<div class="fg"><div class="fl">Grund</div><div class="fv">'+(l.grund||'—')+'</div></div>';
+  b+='<div class="sdiv">Von Ihnen auszufuellen</div>';
+  b+='<div class="two"><div><div class="fl">Eingereicht am</div><input class="finput" value="'+(ge(l,'eingereicht'))+'" placeholder="09.01.2026" oninput="se('+id+',\'eingereicht\',this.value)"></div>';
+  b+='<div><div class="fl">Rueckmeldung am</div><input class="finput" value="'+(ge(l,'rueckmeldung'))+'" placeholder="15.01.2026" oninput="se('+id+',\'rueckmeldung\',this.value)"></div></div>';
+  var st=ge(l,'reklaStatus')||'';
+  b+='<div class="two"><div><div class="fl">Rekla-Status</div><select class="finput" onchange="se('+id+',\'reklaStatus\',this.value)"><option value="" '+(st===''?'selected':'')+'>--</option><option '+(st==='JA'?'selected':'')+'>JA</option><option '+(st==='ABGELEHNT'?'selected':'')+'>ABGELEHNT</option><option value="OFFENE FRAGE" '+(st==='OFFENE FRAGE'?'selected':'')+'>OFFENE FRAGE</option><option '+(st==='NOTIZEN'?'selected':'')+'>NOTIZEN</option></select></div>';
+  b+='<div><div class="fl">Frist</div><div class="fv">'+(isOv(l)?'<span class="ov-chip">Ueberfaellig</span>':'<span class="ok-chip">Im Zeitplan</span>')+'</div></div></div>';
+  b+='<div class="fg"><div class="fl">Ablehnungsgrund</div><input class="finput" value="'+(ge(l,'ablehnungsgrund'))+'" placeholder="falls vorhanden..." oninput="se('+id+',\'ablehnungsgrund\',this.value)"></div>';
+  b+='<div class="fg"><div class="fl">Gutschrift</div><input class="finput" value="'+(ge(l,'gutschrift'))+'" placeholder="Gutschrift falls vorhanden..." oninput="se('+id+',\'gutschrift\',this.value)"></div>';
+  b+='<div class="fg"><div class="fl">Interne Notiz (wird nicht an Aroundhome weitergegeben)</div><textarea class="wfta" rows="2" placeholder="Notiz hinzufuegen..." oninput="saveNote('+id+',this.value)">'+(notes[id]||'')+'</textarea></div>';
+  b+='<div class="modal-actions">';
+  if(PORTALS[a]&&!sub)b+='<button class="btn btn-blue" onclick="openPortal(\''+PORTALS[a]+'\','+id+')"><i class="ti ti-external-link"></i> Portal oeffnen</button>';
+  if(a==='wattfox'&&!sub)b+='<button class="btn btn-amber" onclick="closeMod(\'detailModal\');openWF('+id+')"><i class="ti ti-mail"></i> E-Mail-Entwurf</button>';
+  if(!sub)b+='<button class="btn btn-green" onclick="markEin('+id+')"><i class="ti ti-circle-check"></i> Als eingereicht markieren</button>';
+  else b+='<button class="btn" onclick="toggleDone('+id+');closeMod(\'detailModal\')"><i class="ti ti-rotate-clockwise"></i> Zuruecksetzen</button>';
+  b+='</div>';
+  document.getElementById('dBody').innerHTML=b;document.getElementById('detailModal').classList.add('open');
+}
+
+function saveNote(id,val){notes[id]=val;render1();}
+
+// ── Wattfox ────────────────────────────────────────────────────────────────
+function openWF(id){
+  var l=leads.find(function(x){return x.id===id;});if(!l)return;
+  var lid=l.leadId||xid(l.reklaLink);
+  var b='<div class="fg"><div class="fl">Grund aus Sheet</div><div class="fv">'+(l.grund||'—')+'</div></div>';
+  b+='<div class="fg"><div class="fl">Gespraechsverlauf aus Aircall einfuegen</div><textarea class="wfta" id="wf-ctx" rows="4" placeholder="Gespraechsverlauf hier einfuegen..."></textarea></div>';
+  b+='<div style="margin-bottom:12px;"><button class="btn btn-blue" onclick="regenWF('+id+')"><i class="ti ti-refresh"></i> E-Mail generieren</button></div>';
+  b+='<div class="sdiv">E-Mail-Entwurf</div>';
+  b+='<textarea class="wfta" id="wf-draft" rows="12">'+genWF(l,'')+'</textarea>';
+  b+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><button class="btn" onclick="copyWF()"><i class="ti ti-copy"></i> Kopieren</button><button class="btn btn-green" onclick="markEin('+id+');closeMod(\'wfModal\')"><i class="ti ti-circle-check"></i> Als eingereicht markieren</button><span class="cpok" id="wf-cpok">✓ Kopiert!</span></div>';
+  document.getElementById('wfBody').innerHTML=b;document.getElementById('wfModal').classList.add('open');
+}
+function genWF(l,ctx){
+  var lid=l.leadId||xid(l.reklaLink)||'[Lead-ID]';
+  return'Betreff: Reklamation Lead '+lid+' — '+(ge(l,'eingangsdatum')||'')+'\n\nSehr geehrte Damen und Herren,\n\nvielen Dank fuer Ihre Rueckmeldung bezueglich des o.g. Leads.\n\nReklamationsgrund: '+(l.grund||'—')+'\n'+(ctx?'\nGespraechsverlauf:\n'+ctx+'\n':'')+'\nIm direkten Gespraech mit dem Interessenten hat sich folgendes ergeben:\n- Der Kontakt fand telefonisch statt.\n- Der Interessent hat kein ernsthaftes Kaufinteresse gezeigt.\n- Eine Umsetzung des Projekts ist aus den genannten Gruenden nicht geplant.\n\nWir bitten daher um Anerkennung dieser Reklamation.\n\nMit freundlichen Gruessen,\nPlanville GmbH';
+}
+function regenWF(id){var l=leads.find(function(x){return x.id===id;});if(!l)return;var ctx=document.getElementById('wf-ctx')?.value||'';var el=document.getElementById('wf-draft');if(el)el.value=genWF(l,ctx);}
+function copyWF(){var el=document.getElementById('wf-draft');if(!el)return;navigator.clipboard.writeText(el.value).then(function(){var fb=document.getElementById('wf-cpok');if(fb){fb.style.display='inline';setTimeout(function(){fb.style.display='none';},2000);}});}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function showExport(type){
+  var isAH=type==='aroundhome';
+  document.getElementById('expTitle').textContent=isAH?'Export fuer Aroundhome — Sheet':'Export — Sheet Rekla 2026';
+  var ahOnly=isAH?leads.filter(function(l){return(l.anbieter||'').toLowerCase()==='aroundhome';}):leads;
+  if(!ahOnly.length){document.getElementById('expBody').innerHTML='<p style="color:var(--text2);font-size:13px;">Keine Daten vorhanden.</p>';document.getElementById('exportModal').classList.add('open');return;}
+
+  var rows=ahOnly.map(function(l){
+    if(isAH){
+      return[ge(l,'eingangsdatum'),ge(l,'archiviert'),l.leadId||xid(l.reklaLink),l.grund,l.anbieter,ge(l,'eingereicht'),ge(l,'rueckmeldung'),ge(l,'reklaStatus'),ge(l,'ablehnungsgrund'),ge(l,'gutschrift'),'',ge(l,'notizen')].join('\t');
+    } else {
+      return[ge(l,'eingangsdatum'),ge(l,'archiviert'),l.reklaLink,l.grund,l.anbieter,ge(l,'eingereicht'),ge(l,'rueckmeldung'),ge(l,'reklaStatus'),ge(l,'ablehnungsgrund'),ge(l,'gutschrift'),'',ge(l,'notizen')].join('\t');
+    }
+  });
+  var hdr=isAH?'Leads Erstellungsdatum\tEingang Rekla / Archiviert am (Datum)\tArroundhome LEAD - ID\tGrund\tRekla-Anbieter\tReklamation eingereicht am (Datum)\tReklamationsrueckmeldung am (Datum)\tRekla Status\tAblehnungsgrund\tGuttschriffft\tUeberfaellig (>14 Tage)?\tNotizen':'Eingangsdatum\tEingang Rekla / Archiviert am (Datum)\tRekla LInk\tGrund\tRekla-Anbieter\tReklamation eingereicht am (Datum)\tReklamationsrueckmeldung am (Datum)\tRekla Status\tAblehnungsgrund\tGuttschriffft\tUeberfaellig (>14 Tage)?\tNotizen';
+  var tsv=[hdr].concat(rows).join('\n');
+
+  var b='<div style="font-size:13px;color:var(--text2);margin-bottom:10px;"><strong style="color:var(--text);">'+ahOnly.length+'</strong> '+(isAH?'Aroundhome-Leads':'Leads gesamt')+' · bereit zum Einfuegen</div>';
+  b+='<textarea class="wfta" id="expTA" rows="7" readonly>'+tsv+'</textarea>';
+  b+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:14px;"><button class="btn btn-green" onclick="copyExp()"><i class="ti ti-clipboard-copy"></i> Alles kopieren</button>';
+  if(isAH)b+='<button class="btn btn-blue" onclick="loadToAhReport()"><i class="ti ti-chart-bar"></i> Direkt in Aroundhome Report laden</button>';
+  b+='<span class="cpok" id="exp-cpok">✓ Kopiert!</span></div>';
+  b+='<div class="sdiv">Anleitung</div>';
+  b+='<div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text2);">';
+  b+='<div style="display:flex;gap:8px;"><span style="width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">1</span><span>Sheet <strong>'+(isAH?'Aroundhome':'Rekla 2026')+'</strong> oeffnen → Zelle <strong>A1</strong> anklicken</span></div>';
+  b+='<div style="display:flex;gap:8px;"><span style="width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span>Oben auf <strong>Alles kopieren</strong> klicken</span></div>';
+  b+='<div style="display:flex;gap:8px;"><span style="width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">3</span><span><strong>Strg + Shift + V</strong> (nicht Strg+V!) — nur Werte einfuegen</span></div>';
+  b+='</div>';
+  if(isAH){b+='<div class="info-note"><i class="ti ti-info-circle" style="flex-shrink:0;"></i>Oder: direkt auf "In Aroundhome Report laden" klicken — dann sind die Daten sofort im Tab 2 sichtbar, ohne Sheet-Umweg.</div>';}
+  document.getElementById('expBody').innerHTML=b;document.getElementById('exportModal').classList.add('open');
+}
+function copyExp(){var el=document.getElementById('expTA');if(!el)return;navigator.clipboard.writeText(el.value).then(function(){var fb=document.getElementById('exp-cpok');if(fb){fb.style.display='inline';setTimeout(function(){fb.style.display='none';},2500);}});}
+
+function loadToAhReport(){
+  var ahOnly=leads.filter(function(l){return(l.anbieter||'').toLowerCase()==='aroundhome';});
+  ahLeads=ahOnly.map(function(l,i){
+    return{id:'ah'+i,erstellungsdatum:ge(l,'eingangsdatum'),archiviert:ge(l,'archiviert'),leadId:l.leadId||xid(l.reklaLink),grund:l.grund,anbieter:l.anbieter,eingereicht:ge(l,'eingereicht'),rueckmeldung:ge(l,'rueckmeldung'),reklaStatus:ge(l,'reklaStatus'),ablehnungsgrund:ge(l,'ablehnungsgrund'),gutschrift:ge(l,'gutschrift'),notizen:notes[l.id]||''};
+  });
+  updateAhStats();render2();
+  closeMod('exportModal');
+  switchMainTab(2);
+}
+
+// ── Tab 2: Aroundhome Report ───────────────────────────────────────────────
+function getFiltered2(){
+  var q=document.getElementById('fsearch2').value.toLowerCase(),fs=document.getElementById('fstatus2').value,fo=document.getElementById('fov2').value;
+  return ahLeads.filter(function(l){
+    if(q&&!(l.leadId||'').includes(q)&&!(l.grund||'').toLowerCase().includes(q))return false;
+    if(fs&&getAhStatus(l)!==fs)return false;
+    if(fo==='y'&&!isOvAh(l))return false;if(fo==='n'&&isOvAh(l))return false;
+    return true;
+  });
+}
+function render2(){
+  var list=getFiltered2(),w=document.getElementById('tbl2');
+  if(!ahLeads.length){w.innerHTML='<div class="empty"><i class="ti ti-chart-bar"></i><div class="empty-title">Noch keine Daten</div><div style="font-size:13px;">Daten aus Tab 1 ueber "Export Aroundhome" laden.</div></div>';return;}
+  if(!list.length){w.innerHTML='<div class="empty"><i class="ti ti-search"></i><div class="empty-title">Keine Treffer</div><div style="font-size:13px;">Filter anpassen.</div></div>';return;}
+  var h='<div class="tbl-wrap"><table><thead><tr><th>Erstellungsdatum</th><th>Archiviert am</th><th>Lead-ID</th><th>Grund</th><th>Eingereicht am</th><th>Rueckmeldung</th><th>Status</th><th>Frist</th><th></th></tr></thead><tbody>';
+  list.forEach(function(l){
+    var ov=isOvAh(l);
+    h+='<tr>';
+    h+='<td><span class="date-s">'+(l.erstellungsdatum||'—')+'</span></td>';
+    h+='<td><span class="date-s">'+(l.archiviert||'—')+'</span></td>';
+    h+='<td><span class="mono">'+(l.leadId||'—')+'</span></td>';
+    h+='<td><div class="grund-cell" title="'+(l.grund||'').replace(/"/g,'&quot;')+'">'+(l.grund||'—')+'</div></td>';
+    h+='<td><span class="date-s">'+(l.eingereicht||'—')+'</span></td>';
+    h+='<td><span class="date-s">'+(l.rueckmeldung||'—')+'</span></td>';
+    h+='<td>'+sPill2(l)+'</td>';
+    h+='<td>'+(ov?'<span class="ov-chip">!</span>':'<span class="ok-chip">OK</span>')+'</td>';
+    h+='<td><button class="btn" style="padding:3px 6px;" onclick="openAhDetail(\''+l.id+'\')"><i class="ti ti-chevron-right" style="font-size:13px;"></i></button></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  w.innerHTML=h;
+}
+
+function openAhDetail(id){
+  var l=ahLeads.find(function(x){return x.id===id;});if(!l)return;
+  document.getElementById('ahDTitle').textContent='Lead '+l.leadId;
+  var b='';
+  b+='<div class="two"><div><div class="fl">Erstellungsdatum</div><div class="fv">'+(l.erstellungsdatum||'—')+'</div></div><div><div class="fl">Archiviert am</div><div class="fv">'+(l.archiviert||'—')+'</div></div></div>';
+  b+='<div class="fg"><div class="fl">Lead-ID (Aroundhome)</div><div class="fv" style="font-family:monospace;display:flex;align-items:center;justify-content:space-between;">'+(l.leadId||'—')+'<button class="btn" style="font-size:11px;" onclick="navigator.clipboard.writeText(\''+l.leadId+'\')"><i class="ti ti-copy"></i></button></div></div>';
+  b+='<div class="fg"><div class="fl">Reklamationsgrund</div><div class="fv">'+(l.grund||'—')+'</div></div>';
+  b+='<div class="two"><div><div class="fl">Eingereicht am</div><div class="fv">'+(l.eingereicht||'—')+'</div></div><div><div class="fl">Rueckmeldung am</div><div class="fv">'+(l.rueckmeldung||'—')+'</div></div></div>';
+  b+='<div class="two"><div><div class="fl">Status</div><div class="fv">'+sPill2(l)+'</div></div><div><div class="fl">Frist</div><div class="fv">'+(isOvAh(l)?'<span class="ov-chip">Ueberfaellig</span>':'<span class="ok-chip">Im Zeitplan</span>')+'</div></div></div>';
+  if(l.ablehnungsgrund)b+='<div class="fg"><div class="fl">Ablehnungsgrund</div><div class="fv">'+l.ablehnungsgrund+'</div></div>';
+  if(l.gutschrift)b+='<div class="fg"><div class="fl">Gutschrift</div><div class="fv">'+l.gutschrift+'</div></div>';
+  b+='<div class="info-note"><i class="ti ti-info-circle" style="flex-shrink:0;"></i>Interne Planville-Links sind in diesem Bericht nicht enthalten. Validierung erfolgt ueber das Aroundhome-Cockpit.</div>';
+  document.getElementById('ahDBody').innerHTML=b;document.getElementById('ahDetailModal').classList.add('open');
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function switchMainTab(n){
+  [1,2].forEach(function(i){
+    document.getElementById('tab'+i).classList.toggle('active',i===n);
+    document.getElementById('tnb-'+i).classList.toggle('active',i===n);
+  });
+}
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+</script>
+</body>
+</html>
