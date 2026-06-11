@@ -628,26 +628,48 @@ async function loadFromSheet(tab){
     if(!rows||rows.length<2){showApiStatus('Keine Daten im Sheet.','warn');return;}
     var h=rows[0].map(function(x){return(x||'').toLowerCase();});
     var ci=function(){var t=Array.from(arguments);for(var i=0;i<t.length;i++){var j=h.findIndex(function(x){return x.includes(t[i]);});if(j>=0)return j;}return -1;};
-    var iA=ci('eingangsdatum'),iB=ci('archiviert','eingang rekla'),iC=ci('rekla link','reklalink','link');
-    var iD=ci('grund'),iE=ci('anbieter'),iF=ci('eingereicht'),iG=ci('rückmeld','ruckmeld');
-    var iH=ci('rekla status','status'),iI=ci('ablehnungsgrund'),iJ=ci('gutt','gutschrift'),iK=ci('notizen');
     var parsed=[];
-    for(var i=1;i<rows.length;i++){
-      var r=rows[i];if(!r||r.every(function(c){return!c;}))continue;
-      var link=iC>=0?r[iC]||'':'';
-      parsed.push({id:i,rowIndex:i+1,
-        eingangsdatum:iA>=0?r[iA]||'':'',archiviert:iB>=0?r[iB]||'':'',
-        reklaLink:link,leadId:xid(link),
-        grund:iD>=0?r[iD]||'':'',anbieter:iE>=0?r[iE]||'':'',
-        eingereicht:iF>=0?r[iF]||'':'',rueckmeldung:iG>=0?r[iG]||'':'',
-        reklaStatus:iH>=0?r[iH]||'':'',ablehnungsgrund:iI>=0?r[iI]||'':'',
-        gutschrift:iJ>=0?r[iJ]||'':'',notizen:iK>=0?r[iK]||'':''
-      });
-    }
+
     if(tab==='aroundhome'){
+      // Aroundhome sheet: A=Erstellungsdatum, B=Archiviert, C=Lead-ID, D=Grund, E=Anbieter, F=Eingereicht, G=Rueckmeldung, H=Status, I=Ablehnungsgrund, J=Gutschrift, K=Ueberfaellig, L=Notizen
+      var iA=ci('erstellungsdatum','erstell'),iB=ci('archiviert','eingang rekla');
+      var iC=ci('lead - id','lead-id','leadid','aroundhome lead');
+      var iD=ci('grund'),iE=ci('anbieter'),iF=ci('eingereicht'),iG=ci('rückmeld','ruckmeld');
+      var iH=ci('rekla status','status'),iI=ci('ablehnungsgrund'),iJ=ci('gutt','gutschrift'),iK=ci('notizen');
+      for(var i=1;i<rows.length;i++){
+        var r=rows[i];if(!r||r.every(function(c){return!c;}))continue;
+        parsed.push({id:i,rowIndex:i+1,
+          erstellungsdatum:iA>=0?r[iA]||'':'',
+          archiviert:iB>=0?r[iB]||'':'',
+          leadId:iC>=0?r[iC]||'':'',
+          grund:iD>=0?r[iD]||'':'',
+          anbieter:iE>=0?r[iE]||'':'',
+          eingereicht:iF>=0?r[iF]||'':'',
+          rueckmeldung:iG>=0?r[iG]||'':'',
+          reklaStatus:iH>=0?r[iH]||'':'',
+          ablehnungsgrund:iI>=0?r[iI]||'':'',
+          gutschrift:iJ>=0?r[iJ]||'':'',
+          notizen:iK>=0?r[iK]||'':''
+        });
+      }
       ahLeads=parsed;updateAhStats();render2();
       showApiStatus('✓ '+parsed.length+' Aroundhome-Leads geladen','ok');
     }else{
+      var iA=ci('eingangsdatum'),iB=ci('archiviert','eingang rekla'),iC=ci('rekla link','reklalink','link');
+      var iD=ci('grund'),iE=ci('anbieter'),iF=ci('eingereicht'),iG=ci('rückmeld','ruckmeld');
+      var iH=ci('rekla status','status'),iI=ci('ablehnungsgrund'),iJ=ci('gutt','gutschrift'),iK=ci('notizen');
+      for(var i=1;i<rows.length;i++){
+        var r=rows[i];if(!r||r.every(function(c){return!c;}))continue;
+        var link=iC>=0?r[iC]||'':'';
+        parsed.push({id:i,rowIndex:i+1,
+          eingangsdatum:iA>=0?r[iA]||'':'',archiviert:iB>=0?r[iB]||'':'',
+          reklaLink:link,leadId:xid(link),
+          grund:iD>=0?r[iD]||'':'',anbieter:iE>=0?r[iE]||'':'',
+          eingereicht:iF>=0?r[iF]||'':'',rueckmeldung:iG>=0?r[iG]||'':'',
+          reklaStatus:iH>=0?r[iH]||'':'',ablehnungsgrund:iI>=0?r[iI]||'':'',
+          gutschrift:iJ>=0?r[iJ]||'':'',notizen:iK>=0?r[iK]||'':''
+        });
+      }
       leads=parsed;edits={};done={};refresh1();
       showApiStatus('✓ '+parsed.length+' Leads geladen','ok');
     }
