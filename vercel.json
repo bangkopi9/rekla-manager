@@ -1,9 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "*.html", "use": "@vercel/static" }
-  ],
+  "functions": {
+    "api/sheets.js": {
+      "memory": 256,
+      "maxDuration": 10
+    }
+  },
   "routes": [
+    { "src": "/api/sheets", "dest": "/api/sheets.js" },
     { "src": "/aroundhome", "dest": "/aroundhome.html" },
     { "src": "/", "dest": "/index.html" }
   ]

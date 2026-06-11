@@ -313,7 +313,14 @@ if(isAhView){
 // ── Helpers ────────────────────────────────────────────────────────────────
 function xid(link){if(!link)return'';var m=link.match(/leads\/(\d+)/);return m?m[1]:'';}
 function ge(l,f){return(edits[l.id]&&edits[l.id][f]!==undefined)?edits[l.id][f]:l[f]||'';}
-function se(id,f,v){if(!edits[id])edits[id]={};edits[id][f]=v;updateStats();render1();}
+function se(id,f,v){
+  if(!edits[id])edits[id]={};
+  edits[id][f]=v;
+  updateStats();render1();
+  // Auto-save to sheet
+  var lead=leads.find(function(x){return x.id===id;});
+  if(lead && lead.rowIndex) saveRowToSheet(lead,'rekla');
+}
 function isSub(l){var e=ge(l,'eingereicht'),s=ge(l,'reklaStatus');return !!(e||(s&&s.toUpperCase()==='JA')||done[l.id]);}
 function isOv(l){
   if(isSub(l))return false;
@@ -604,6 +611,113 @@ function switchMainTab(n){
   });
 }
 function closeMod(id){document.getElementById(id).classList.remove('open');}
+function toggleManualImport(){var el=document.getElementById('manualImportBox');el.style.display=el.style.display==='none'?'block':'none';}
+
+// ── Google Sheets API ──────────────────────────────────────────────────────
+var API_BASE = '/api/sheets';
+var isSaving = false;
+
+async function loadFromSheet(tab) {
+  tab = tab || 'rekla';
+  var btn = document.getElementById('loadBtn');
+  if (btn) { btn.textContent = 'Wird geladen...'; btn.disabled = true; }
+  try {
+    var res = await fetch(API_BASE + '?action=read&tab=' + tab);
+    var data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    var rows = data.data;
+    if (!rows || rows.length < 2) {
+      showApiStatus('Keine Daten im Sheet gefunden.', 'warn');
+      return;
+    }
+    var h = rows[0].map(function(x){ return x.toLowerCase(); });
+    var ci = function() {
+      var terms = Array.from(arguments);
+      for (var t of terms) { var i = h.findIndex(function(x){ return x.includes(t); }); if (i >= 0) return i; }
+      return -1;
+    };
+    var iA=ci('eingangsdatum'), iB=ci('archiviert','eingang rekla'), iC=ci('rekla link','reklalink','link');
+    var iD=ci('grund'), iE=ci('anbieter'), iF=ci('eingereicht'), iG=ci('rückmeld','ruckmeld');
+    var iH=ci('rekla status','status'), iI=ci('ablehnungsgrund'), iJ=ci('gutt','gutschrift'), iK=ci('notizen');
+    var parsed = [];
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r || r.every(function(c){ return !c; })) continue;
+      var link = iC >= 0 ? r[iC] || '' : '';
+      parsed.push({
+        id: i, rowIndex: i + 1,
+        eingangsdatum: iA>=0?r[iA]||'':'', archiviert: iB>=0?r[iB]||'':'',
+        reklaLink: link, leadId: xid(link),
+        grund: iD>=0?r[iD]||'':'', anbieter: iE>=0?r[iE]||'':'',
+        eingereicht: iF>=0?r[iF]||'':'', rueckmeldung: iG>=0?r[iG]||'':'',
+        reklaStatus: iH>=0?r[iH]||'':'', ablehnungsgrund: iI>=0?r[iI]||'':'',
+        gutschrift: iJ>=0?r[iJ]||'':'', notizen: iK>=0?r[iK]||'':''
+      });
+    }
+    if (tab === 'aroundhome') {
+      ahLeads = parsed;
+      updateAhStats(); render2();
+      showApiStatus('✓ ' + parsed.length + ' Aroundhome-Leads geladen', 'ok');
+    } else {
+      leads = parsed; edits = {}; done = {};
+      refresh1();
+      showApiStatus('✓ ' + parsed.length + ' Leads aus Sheet geladen', 'ok');
+    }
+  } catch(err) {
+    showApiStatus('Fehler: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.textContent = 'Aus Sheet laden'; btn.disabled = false; }
+  }
+}
+
+async function saveRowToSheet(lead, tab) {
+  tab = tab || 'rekla';
+  var isAH = tab === 'aroundhome';
+  var vals = isAH ? [
+    ge(lead,'eingangsdatum'), ge(lead,'archiviert'),
+    lead.leadId || xid(lead.reklaLink), lead.grund, lead.anbieter,
+    ge(lead,'eingereicht'), ge(lead,'rueckmeldung'), ge(lead,'reklaStatus'),
+    ge(lead,'ablehnungsgrund'), ge(lead,'gutschrift'), '', ge(lead,'notizen')
+  ] : [
+    ge(lead,'eingangsdatum'), ge(lead,'archiviert'),
+    lead.reklaLink, lead.grund, lead.anbieter,
+    ge(lead,'eingereicht'), ge(lead,'rueckmeldung'), ge(lead,'reklaStatus'),
+    ge(lead,'ablehnungsgrund'), ge(lead,'gutschrift'), '', ge(lead,'notizen')
+  ];
+  try {
+    var res = await fetch(API_BASE + '?action=write&tab=' + tab, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowIndex: lead.rowIndex, values: vals })
+    });
+    var data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    showApiStatus('✓ Gespeichert', 'ok');
+  } catch(err) {
+    showApiStatus('Speicherfehler: ' + err.message, 'error');
+  }
+}
+
+function showApiStatus(msg, type) {
+  var el = document.getElementById('apiStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'inline';
+  el.style.color = type === 'ok' ? 'var(--green-text)' : type === 'warn' ? 'var(--amber-text)' : 'var(--red-text)';
+  setTimeout(function(){ el.style.display = 'none'; }, 3000);
+}
+
+</script>
+<script>
+// Auto-load data when page opens
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    loadFromSheet('rekla');
+    if (document.getElementById('tab2').classList.contains('active')) {
+      loadFromSheet('aroundhome');
+    }
+  }, 500);
+});
 </script>
 </body>
 </html>
