@@ -218,7 +218,7 @@ tr.done-row td{opacity:.45;}
   <div class="import-box">
   <div class="import-header"><i class="ti ti-refresh"></i> Google Sheets &mdash; Live Verbindung</div>
   <div class="import-body">
-    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Daten werden direkt aus Google Sheets geladen. Kein Copy-Paste noetig.</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Daten werden direkt aus Google Sheets geladen. Kein Copy-Paste noetig.<br><span id="syncTime" style="font-size:11px;color:var(--text2);"></span></div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-blue" id="loadBtn" onclick="loadFromSheet('rekla')"><i class="ti ti-refresh"></i> Aus Sheet laden</button>
       <button class="btn" onclick="toggleManualImport()"><i class="ti ti-upload"></i> Manuell importieren</button>
@@ -358,9 +358,14 @@ function ge(l,f){return(edits[l.id]&&edits[l.id][f]!==undefined)?edits[l.id][f]:
 function se(id,f,v){
   if(!edits[id])edits[id]={};
   edits[id][f]=v;
-  updateStats();render1();
   var lead=leads.find(function(x){return x.id===id;});
+  if(f==='anbieter'&&lead)lead.anbieter=v;
+  updateStats();render1();
   if(lead&&lead.rowIndex){saveRowToSheet(lead,'rekla');}
+}
+function setAnbieter(id,val){
+  se(id,'anbieter',val);
+  openDetail(id);
 }
 function isSub(l){var e=ge(l,'eingereicht'),s=ge(l,'reklaStatus');return !!(e||(s&&s.toUpperCase()==='JA')||done[l.id]);}
 function isOv(l){
@@ -515,6 +520,8 @@ function openDetail(id){
   if(l.reklaLink)b+='<div class="fg"><div class="fl">Rekla-Link (intern)</div><div class="fv"><a href="'+l.reklaLink+'" target="_blank" style="color:var(--blue-text);font-size:12px;">'+l.reklaLink+'</a></div></div>';
   b+='<div class="fg"><div class="fl">Grund</div><div class="fv">'+(l.grund||'—')+'</div></div>';
   b+='<div class="sdiv">Von Ihnen auszufuellen</div>';
+  var an=(ge(l,'anbieter')||'').toLowerCase();
+  b+='<div class="fg"><div class="fl">Rekla-Anbieter</div><select class="finput" onchange="setAnbieter('+id+',this.value)"><option value="" '+(an===''?'selected':'')+'>--</option><option value="aroundhome" '+(an==='aroundhome'?'selected':'')+'>Aroundhome</option><option value="SKV" '+(an==='skv'?'selected':'')+'>SKV</option><option value="DAA" '+(an==='daa'?'selected':'')+'>DAA</option><option value="Wattfox" '+(an==='wattfox'?'selected':'')+'>Wattfox</option></select></div>';
   b+='<div class="two"><div><div class="fl">Eingereicht am</div><input class="finput" value="'+(ge(l,'eingereicht'))+'" placeholder="09.01.2026" oninput="se('+id+',\'eingereicht\',this.value)"></div>';
   b+='<div><div class="fl">Rueckmeldung am</div><input class="finput" value="'+(ge(l,'rueckmeldung'))+'" placeholder="15.01.2026" oninput="se('+id+',\'rueckmeldung\',this.value)"></div></div>';
   var st=ge(l,'reklaStatus')||'';
@@ -759,6 +766,7 @@ async function loadFromSheet(tab){
         });
       }
       leads=parsed;edits={};done={};refresh1();
+      updateSyncTime();
       showApiStatus('✓ '+parsed.length+' Leads geladen','ok');
     }
   }catch(err){
@@ -795,6 +803,14 @@ async function saveRowToSheet(lead,tab){
   }catch(err){
     console.error('saveRow error:',err);
   }
+}
+
+function updateSyncTime(){
+  var el=document.getElementById('syncTime');
+  if(!el)return;
+  var now=new Date();
+  var ts=now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  el.textContent='Letzte Synchronisation: '+ts+' Uhr';
 }
 
 function showApiStatus(msg,type){
